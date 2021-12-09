@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <title>까까 채팅방</title>
+    </head>
+    <body>
+        <center>
+        <h1>오둥이 테스트</h1>
+        <!-- 니 아이피 주소 {{ request.remote_addr }} <br/> -->
+        <img src="{{ url_for('static', filename='img/odung.png') }}"> </br></br>
+        <input type="password", style="width:300px", id="password", Placeholder="출입 비밀번호를 입력하세요." />
+        <input type="button", id="send_button", onclick="send_password();", value="전송" />
+
+        
+        </center>
+        
+    </body>
+</html>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js" integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA==" crossorigin="anonymous"></script>
+<script type="text/javascript" charset="utf-8">
+    
+    var socket = io();
+    socket.on('connect', function() {
+        socket.emit('my event', {data: 'I\'m connected!'});
+    });
+
+    function send_password() {
+        socket.emit('login', {password: document.getElementById('password').value});
+        document.getElementById('password').value = "";
+    }
+</script>
+
+<style>
+    body {
+        position: absolute;
+        left: 50%;
+        transform: translate(-50%);
+    }
+</style>
