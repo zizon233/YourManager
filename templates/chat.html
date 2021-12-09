@@ -30,16 +30,6 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js" integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA==" crossorigin="anonymous"></script>
 <script type="text/javascript" charset="utf-8">
-    //var send_socket = new WebSocket("ws://127.0.0.1:8000/sendChat");
-
-    //var receive_socket = new WebSocket("ws://127.0.0.1:8000/receiveChat");
-    //ws.onmessage = function (event) {
-    //    document.getElementById("chatBox").value = event.data;
-    //};
-
-    //send_socket.onopen = function(){
-    //    alert("test");
-    //};
     var socket = io();
 
     function send_message() {
@@ -48,10 +38,6 @@
         document.getElementById("chatBox").value = document.getElementById("chatBox").value + document.getElementById("message").value + "\n";
         document.getElementById("message").value = "";
     }
-
-    //function connect() {
-    //    receive_socket.send(document.getElementById("connect").value);
-    //}
     
 </script>
 
