@@ -32,13 +32,19 @@ app.config["SECRET_KEY"] = "manager"
 SESSION_TYPE = "redis"
 app.config.from_object(__name__)
 Session(app)
-socketio = SocketIO(app)
+socketio = SocketIO(
+    app,
+    ping_interval=5,
+    allow_upgrades=True,
+    cors_allowed_origins="http://ec2-3-23-132-5.us-east-2.compute.amazonaws.com",
+)
 
 
 @app.route("/")
 def index():
-    # logger.info(f'connect : {request.environ["HTTP_X_FORWARDED_FOR"]}')
-    # logger.info(f"{request.host}")
+    logger.info(f"connect : {request.__dict__}")
+    # logger.info(f"{request.Connection}")
+    # logger.info(session["user"])
     return render_template("index.html")
 
 
