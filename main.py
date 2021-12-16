@@ -1,3 +1,4 @@
+#!/usr/local/bin/python3.8
 from flask import (
     Flask,
     has_request_context,
@@ -37,7 +38,7 @@ socketio = SocketIO(app)
 
 @app.route("/")
 def index():
-    # logger.info(f'connect : {request.environ["HTTP_X_FORWARDED_FOR"]}')
+    logger.info(f'connect : {request.environ["HTTP_X_FORWARDED_FOR"]}')
     # logger.info(f"{request.host}")
     return render_template("index.html")
 
@@ -50,6 +51,13 @@ def chat():
 @socketio.on("my event")
 def handle_my_custom_event(data):
     logger.info(f"received message: {data}")
+    socketio.emit("broad message", data["message"], broadcast=True)
+
+
+@socketio.on("disconnect event")
+def disconnect_event():
+    logger.info(f"disconnect request.")
+    return emit("redirect2", {"url": url_for("index")})
 
 
 @socketio.on("login")
@@ -59,7 +67,7 @@ def login(data):
     if password == "4321":
         logger.info("pass")
         return emit("redirect", {"url": url_for("chat")})
-    return emit("redirect", {"url": url_for("index")})
+    socketio.emit("my response", "비밀번호 알아와!")
 
 
 if __name__ == "__main__":

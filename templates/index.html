@@ -9,7 +9,8 @@
         <h1>오둥이 테스트</h1>
         <!-- 니 아이피 주소 {{ request.remote_addr }} <br/> -->
         <img src="{{ url_for('static', filename='img/odung.png') }}"> </br></br>
-        <input type="password", style="width:300px", id="password", Placeholder="출입 비밀번호를 입력하세요." />
+        <input type="text", style="width:300px", id="text", Placeholder="비밀번호 알고 있냐?" readonly />
+        <input type="password", style="width:300px", id="password", Placeholder="출입 비밀번호를 입력하세요." autofocus/>
         <input type="button", id="send_button", onclick="send_password();", value="전송" />
 
         
@@ -17,17 +18,32 @@
         
     </body>
 </html>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js" integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA==" crossorigin="anonymous"></script>
+<script src="https://cdn.socket.io/4.4.0/socket.io.min.js" integrity="sha384-1fOn6VtTq3PWwfsOrk45LnYcGosJwzMHv+Xh/Jx5303FVOXzEnw0EpLv30mtjmlj" crossorigin="anonymous"></script>
 <script type="text/javascript" charset="utf-8">
     
-    var socket = io();
-    socket.on('connect', function() {
+    const socket = io('http://ec2-3-23-132-5.us-east-2.compute.amazonaws.com', { transports: ['websocket'] });
+    socket.on('connect', () => {
         socket.emit('my event', {data: 'I\'m connected!'});
     });
 
+    var myPassword = document.getElementById('password');
+    myPassword.addEventListener("keyup", function(event) {
+        if (event.keyCode === 13) {
+            event.preventDefault();
+            document.getElementById("send_button").click();
+        }
+    })
+    
     function send_password() {
         socket.emit('login', {password: document.getElementById('password').value});
         document.getElementById('password').value = "";
+        socket.on('my response', (data) => {
+            document.getElementById('text').value = data;
+        });
+        document.getElementById('password').value = "";
+        socket.on('redirect', (url) => {
+            window.location = url.url;
+        });
     }
 </script>
 
