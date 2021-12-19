@@ -1,14 +1,4 @@
 <!DOCTYPE html>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js" integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA==" crossorigin="anonymous"></script>
-<script type="text/javascript" charset="utf-8">
-    alert(location.origin);
-    var socket = io.connect('http://' + document.domain + ':8000');
-    alert(location.port);
-    socket.on('connect', function() {
-       socket.emit('test', {data: 'I\'m connected!'});
-    });
-    alert("exit");
-</script>
 <html>
     <head>
         <meta charset="UTF-8">
@@ -19,24 +9,68 @@
         <h1>오둥이 테스트</h1>
         <!-- 니 아이피 주소 {{ request.remote_addr }} <br/> -->
         <img src="{{ url_for('static', filename='img/odung.png') }}"> </br>
-        <textarea id="chatBox", cols="50", rows="10", readonly></textarea> </br>
-        <input type="text", id="message", Placeholder="채팅을 입력하세요." />
+        <textarea id="chatBox", style="font-weight:bold", cols="100", rows="20", resize=none, readonly></textarea>
+        <select id='userList' style="width:150px;" size="15">
+        </select> </br>
+        <input type="text", id="message", Placeholder="채팅을 입력하세요." autofocus/>
         <input type="button", id="send_button", onclick="send_message()", value="전송" /> </br>
-        <button id="connect_button", onclick="connect();", value={{ request.remote_addr }}>연결</button>
+        <!-- <button id="connect_button", onclick="connect()", value={{ request.remote_addr }}>연결</button> -->
         <button id="disconnect_button", onclick="disconnect()">종료</button>
         </center>
     </body>
 </html>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js" integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA==" crossorigin="anonymous"></script>
+<script src="http://code.jquery.com/jquery-latest.min.js"></script>
+<script src="https://cdn.socket.io/4.4.0/socket.io.min.js" integrity="sha384-1fOn6VtTq3PWwfsOrk45LnYcGosJwzMHv+Xh/Jx5303FVOXzEnw0EpLv30mtjmlj" crossorigin="anonymous"></script>
 <script type="text/javascript" charset="utf-8">
-    var socket = io();
+    
+    const socket = io('http://ec2-3-23-132-5.us-east-2.compute.amazonaws.com', { transports: ['websocket'] });
+    socket.on('connect', () => {
+        socket.emit('connect event', '{{ user["user_name"] }} connected!');
+    });
+
+    var myMessage = document.getElementById('message');
+    myMessage.addEventListener("keyup", function(event) {
+        if (event.keyCode === 13) {
+            event.preventDefault();
+            document.getElementById("send_button").click();
+        }
+    })
+
+    socket.on('broad message', (message) => {
+        var isScrollBottom = ((Math.ceil(document.getElementById("chatBox").scrollTop) + document.getElementById("chatBox").clientHeight) >= document.getElementById("chatBox").scrollHeight)
+        document.getElementById("chatBox").value = document.getElementById("chatBox").value + message + "\n";
+        if (isScrollBottom) {
+            document.getElementById("chatBox").scrollTop = document.getElementById("chatBox").scrollHeight;
+        }
+    });
+
+    socket.on('enter user', (user_data) => {
+        var userList = document.getElementById("userList");
+        var user = document.createElement("option");
+        user.text = user_data["user_name"];
+        user.value = user_data["user_id"];
+        userList.options.add(user);
+    });
+
+    socket.on('quit user', (user_data) => {
+        $("#userList option[value='user_data['user_id']']").remove();
+    });
+
+    socket.on('disconnect event', (url) => {
+        window.location = url.url;
+    });
 
     function send_message() {
-        //send_socket.send(document.getElementById("message").value);
-        socket.emit('my event', {message: document.getElementById("message").value});
-        document.getElementById("chatBox").value = document.getElementById("chatBox").value + document.getElementById("message").value + "\n";
+        var message = document.getElementById("message").value.trim();
+        if (message != "") {
+            socket.emit('send message', message);
+        }
         document.getElementById("message").value = "";
+    }
+
+    function disconnect() {
+        socket.emit('disconnect event');
     }
     
 </script>
@@ -46,5 +80,9 @@
         position: absolute;
         left: 50%;
         transform: translate(-50%);
+    }
+
+    textarea {
+        resize: none;
     }
 </style>
