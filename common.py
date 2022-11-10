@@ -1,7 +1,8 @@
 import json
 import logging
 from logging.handlers import SMTPHandler, RotatingFileHandler
-
+import secrets
+from passlib.hash import pbkdf2_sha256
 
 def get_server_info(db_kind):
     with open("./conf/conf.json") as conf:
@@ -22,3 +23,11 @@ def get_file_handler():
     file_handler.setFormatter(formatter)
     
     return file_handler
+
+def make_hash(origin):
+    salt = str(secrets.SystemRandom().getrandbits(128))
+    hash = pbkdf2_sha256.hash(origin + salt)
+    return hash, salt
+    
+def verify_hash(input, hash):
+    return pbkdf2_sha256.verify(input, hash)

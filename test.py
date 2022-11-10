@@ -4,6 +4,10 @@ import json
 from client.mysql import MySQL
 import common
 from passlib.hash import pbkdf2_sha256
+import uuid
+import datetime
+from pytz import timezone
+from model import chat
 
 user = User("test", "test")
 
@@ -30,7 +34,7 @@ print(b64decode(byte.encode("utf-8")))
 mysql_info = common.get_server_info("mysql")
 print(mysql_info)
 with MySQL(
-    mysql_info["host"], mysql_info["user"], mysql_info["password"], "YourManager"
+    mysql_info["host"], mysql_info["user"], mysql_info["password"], "yourmanager"
 ) as mysql:
     print("connect.")
 
@@ -44,3 +48,10 @@ print(
         test_pass,
     )
 )
+
+print(uuid.uuid4().bytes)
+time = datetime.datetime.now(timezone("Asia/Seoul"))
+
+chat.insert_new_message(time, "zizon233", b"123", "message")
+
+print(chat.get_all_message("test"))

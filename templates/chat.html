@@ -2,20 +2,20 @@
 <html>
     <head>
         <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalabe=no"/>
         <title>까까 채팅방</title>
     </head>
     <body>
         <center>
         <h1>오둥이 테스트</h1>
-        <!-- 니 아이피 주소 {{ request.remote_addr }} <br/> -->
         <img src="{{ url_for('static', filename='img/odung.png') }}"> </br>
-        <textarea id="chatBox", style="font-weight:bold", cols="100", rows="20", resize=none, readonly></textarea>
+        <textarea id="chatBox", style="font-weight:bold", cols="45", rows="18", resize=none, readonly></textarea>
         <select id='userList' style="width:150px;" size="15">
         </select> </br>
-        <input type="text", id="message", Placeholder="채팅을 입력하세요." autofocus/>
-        <input type="button", id="send_button", onclick="send_message()", value="전송" /> </br>
-        <!-- <button id="connect_button", onclick="connect()", value={{ request.remote_addr }}>연결</button> -->
+        <input type="text", style="width:380px;", id="message", Placeholder="채팅을 입력하세요." autofocus/> </br>
         <button id="disconnect_button", onclick="disconnect()">종료</button>
+        &nbsp;&nbsp;&nbsp;
+        <input type="button", id="send_button", onclick="send_message()", value="전송" />
         </center>
     </body>
 </html>
@@ -24,7 +24,7 @@
 <script src="https://cdn.socket.io/4.4.0/socket.io.min.js" integrity="sha384-1fOn6VtTq3PWwfsOrk45LnYcGosJwzMHv+Xh/Jx5303FVOXzEnw0EpLv30mtjmlj" crossorigin="anonymous"></script>
 <script type="text/javascript" charset="utf-8">
     
-    const socket = io('http://ec2-3-23-132-5.us-east-2.compute.amazonaws.com', { transports: ['websocket'] });
+    const socket = io('http://3.132.24.2', { transports: ['websocket'] });
     socket.on('connect', () => {
         socket.emit('connect event', '{{ user["user_name"] }} connected!');
     });
@@ -45,6 +45,11 @@
         }
     });
 
+    socket.on('room message', (message) => {
+        document.getElementById("chatBox").value = message + document.getElementById("chatBox").value;
+        document.getElementById("chatBox").scrollTop = document.getElementById("chatBox").scrollHeight;
+    });
+
     socket.on('enter user', (user_data) => {
         var userList = document.getElementById("userList");
         var user = document.createElement("option");
@@ -53,9 +58,6 @@
         userList.options.add(user);
     });
 
-    socket.on('quit user', (user_data) => {
-        $("#userList option[value='user_data['user_id']']").remove();
-    });
 
     socket.on('disconnect event', (url) => {
         window.location = url.url;
@@ -83,6 +85,7 @@
     }
 
     textarea {
+        font-size: 15px;
         resize: none;
     }
 </style>

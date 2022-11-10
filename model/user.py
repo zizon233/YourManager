@@ -57,7 +57,7 @@ class User:
             mysql_info["host"],
             mysql_info["user"],
             mysql_info["password"],
-            "YourManager",
+            "yourmanager",
         ) as mysql:
             current_time = datetime.datetime.now(timezone("Asia/Seoul"))
             mysql.register_user(
@@ -76,7 +76,7 @@ class User:
             mysql_info["host"],
             mysql_info["user"],
             mysql_info["password"],
-            "YourManager",
+            "yourmanager",
         ) as mysql:
             if mysql.check_exist("user", "user_id", self.user_id):
                 return True
@@ -88,7 +88,7 @@ class User:
             mysql_info["host"],
             mysql_info["user"],
             mysql_info["password"],
-            "YourManager",
+            "yourmanager",
         ) as mysql:
             self.user_name, self.email = mysql.get_user_info(self.user_id)
 
@@ -99,7 +99,7 @@ class User:
             mysql_info["host"],
             mysql_info["user"],
             mysql_info["password"],
-            "YourManager",
+            "yourmanager",
         ) as mysql:
             password = mysql.get_password(user_id)
         return password
@@ -111,7 +111,7 @@ class User:
             mysql_info["host"],
             mysql_info["user"],
             mysql_info["password"],
-            "YourManager",
+            "yourmanager",
         ) as mysql:
             password = mysql.get_salt(user_id)
         return password

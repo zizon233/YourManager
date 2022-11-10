@@ -1,7 +1,7 @@
 import os
 import functools
-import secrets
-from passlib.hash import pbkdf2_sha256
+import datetime
+from pytz import timezone
 from flask import (
     Flask,
     has_request_context,
@@ -15,10 +15,11 @@ from flask_session import Session
 from flask_login import login_user, logout_user, current_user, LoginManager
 from flask_socketio import SocketIO, send, emit, disconnect
 from flask_wtf.csrf import CSRFProtect
-from flask_wtf import FlaskForm
 import logging
 
 from model.user import User
+from model.room import Room
+import model.chat
 from form import RegisterationForm, LoginForm
 
 import common
@@ -31,11 +32,12 @@ app = Flask(__name__, static_folder="templates/")
 app.config["SECRET_KEY"] = os.urandom(24)
 csrf = CSRFProtect(app)
 SESSION_TYPE = "redis"
+PERMANENT_SESSION_LIFETIME = 600
 app.config.from_object(__name__)
 Session(app)
 socketio = SocketIO(
     app,
-    cors_allowed_origins="http://ec2-3-23-132-5.us-east-2.compute.amazonaws.com",
+    cors_allowed_origins="http://3.132.24.2",
     manage_session=False,
 )
 
@@ -54,7 +56,7 @@ def authenticated_only(f):
     @functools.wraps(f)
     def wrapped(*args, **kwargs):
         if not current_user.is_authenticated:
-            disconnect()
+            disconnect2()
         else:
             return f(*args, **kwargs)
 
@@ -66,7 +68,6 @@ def index():
     logger.info(f'connect : {request.environ["HTTP_X_FORWARDED_FOR"]}')
     form = LoginForm()
     if form.validate_on_submit():
-
         user = User(
             form.data.get("user_id"),
             passwd_hash=form.data.get("password"),
@@ -76,14 +77,12 @@ def index():
             logger.info(f"{user.user_id} 로그인 실패(없는 아이디)")
             return render_template("index.html", form=form, response="존재하지 않는 아이디입니다.")
 
-        if not pbkdf2_sha256.verify(
+        if not common.verify_hash(
             user.passwd_hash + User.get_salt(user.user_id),
             User.get_passwd_hash(user.user_id),
         ):
             logger.info(f"{user.user_id} 로그인 실패(비밀번호 오류)")
             return render_template("index.html", form=form, response="비밀번호가 틀렸습니다.")
-
-        logger.info(user.is_authenticated())
 
         logger.info(f"{user.user_id} 로그인 성공")
         login_user(user)
@@ -97,12 +96,12 @@ def register():
     form = RegisterationForm()
     if form.validate_on_submit():
 
-        salt = str(secrets.SystemRandom().getrandbits(128))
+        passwd_hash, salt = common.make_hash(form.data.get("password"))
 
         user = User(
             form.data.get("user_id"),
             form.data.get("user_name"),
-            pbkdf2_sha256.hash(form.data.get("password") + salt),
+            passwd_hash,
             salt,
         )
 
@@ -138,15 +137,26 @@ def connect_event(data):
         "email": current_user.email,
     }
     socketio.emit("enter user", user_data, broadcast=True)
+    room_id = b"\xdf\x1f<[\xac\x91G]\x8e\xc3\x17\xc1E\xc5\xc6\xbf"
+    room_message = model.chat.get_all_message(room_id)
+    socketio.emit("room message", room_message)
 
 
 @socketio.on("send message")
 @authenticated_only
 def send_message_event(message):
-    message = f"{current_user.user_name} : {message}"
-    logger.info(f"received message: {message}")
-    # 대화 저장 로직
-    socketio.emit("broad message", message, broadcast=True)
+    current_time = datetime.datetime.now(timezone("Asia/Seoul")).strftime(
+        "%Y-%m-%d %H:%M"
+    )
+    send_message = f"[{current_time}] {current_user.user_name} : {message}"
+    logger.info(f"received message: {send_message}")
+    model.chat.insert_new_message(
+        current_time,
+        current_user.user_id,
+        b"\xdf\x1f<[\xac\x91G]\x8e\xc3\x17\xc1E\xc5\xc6\xbf",
+        message,
+    )
+    socketio.emit("broad message", send_message, broadcast=True)
 
 
 @socketio.on("disconnect event")
@@ -165,8 +175,20 @@ def disconnect_event():
 
 @socketio.event
 def disconnect():
-    logger.warning("로그인 없이 접근하였습니다.")
+    logger.warning("test 종료되었습니다.")
     return emit("disconnect event", {"url": url_for("index")})
+
+
+@socketio.event
+def disconnect2():
+    logger.warning("접근이 종료되었습니다.")
+    return emit("disconnect event", {"url": url_for("index")})
+
+
+# react-native
+@socketio.on("react connect event")
+def react_connect(data):
+    logger.info(f"react connect.")
 
 
 if __name__ == "__main__":
